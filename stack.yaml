@@ -1,0 +1,10 @@
+resolver: lts-11.1
+
+packages:
+- .
+
+extra-deps:
+
+- git: https://github.com/Enecuum/Node
+  commit: b468fe7a152fbeba1833bc94fbfff1f0069a1877
+
