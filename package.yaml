@@ -1,74 +1,41 @@
 name:                yellow-stone
-version:             0.1.0.0
-github:              "githubuser/yellow-stone"
-license:             BSD3
-author:              "Alexander Granin"
-maintainer:          "graninas@gmail.com"
-copyright:           "2018 Alexander Granin"
+version:             0.0.1.0
 
-extra-source-files:
-- README.md
-- ChangeLog.md
 
-# Metadata used when publishing your package
-# synopsis:            Short description of your package
-# category:            Web
-
-# To avoid duplicated efforts in documentation and dealing with the
-# complications of embedding Haddock markup inside cabal files, it is
-# common to point users to the README.md file.
-description:         Please see the README on GitHub at <https://github.com/githubuser/yellow-stone#readme>
-
-dependencies:
-- base >= 4.7 && < 5
-
-library:
-  source-dirs: src
 
 default-extensions:
 - NoImplicitPrelude
-- GADTs
-- RankNTypes
-- DeriveFunctor
-- DeriveGeneric
-- OverloadedStrings
-- LambdaCase
-- MultiParamTypeClasses
-- ExplicitNamespaces
-- TypeApplications
-- ScopedTypeVariables
-- TypeOperators
-- TypeFamilies
-- DataKinds
-- FlexibleContexts
-- FlexibleInstances
-- PatternSynonyms
-- PolyKinds
-- DefaultSignatures
-- ConstraintKinds
-- NamedFieldPuns
-- TupleSections
-- ViewPatterns
-- MultiWayIf
+
+
+dependencies:
+- base >= 4.7 && < 5
+- aeson
+- Hydra
+
+
+library:
+  source-dirs:
+  - src
+  ghc-options:
+  - -Wall
+  - -Wcompat
+  - -Widentities
+  - -fhide-source-paths
+
+
 
 executables:
-  yellow-stone-exe:
+  yellow-stone:
     main:                Main.hs
-    source-dirs:         app
+    source-dirs:         app/
     ghc-options:
     - -threaded
     - -rtsopts
     - -with-rtsopts=-N
-    dependencies:
-    - yellow-stone
-
-tests:
-  yellow-stone-test:
-    main:                Spec.hs
-    source-dirs:         test
-    ghc-options:
-    - -threaded
-    - -rtsopts
-    - -with-rtsopts=-N
-    dependencies:
-    - yellow-stone
+    - -with-rtsopts=-A32M
+    - -with-rtsopts=-AL128
+    - -with-rtsopts=-qn2
+    - -Wall
+    - -O2
+    - -fspec-constr-recursive=10
+    - -fno-ignore-asserts

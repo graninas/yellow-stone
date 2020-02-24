@@ -1,6 +1,7 @@
 module Main where
 
-import Lib
+import Hydra.Language
+import Prelude
 
 main :: IO ()
-main = someFunc
+main = pure ()

@@ -1,10 +1,12 @@
-resolver: lts-11.1
+resolver: lts-14.4
 
 packages:
-- .
+  - .
+
 
 extra-deps:
 
-- git: https://github.com/Enecuum/Node
-  commit: b468fe7a152fbeba1833bc94fbfff1f0069a1877
-
+- git: https://github.com/graninas/Hydra.git
+  commit: c1636399cb79fcd2ce6f406fe0a910c1a2f5d98a
+- base58-bytestring-0.1.0
+- time-units-1.0.0
