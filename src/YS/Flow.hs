@@ -1,0 +1,16 @@
+module YS.Flow where
+--
+--
+-- startMove enemyName moveFlow =
+--   lookupChar enemyName $ \enemy ->
+--     checkMoveEiligibility enemy
+--
+--
+--
+-- startMove 'enemyName $ \enemy ->
+--   showMovesCount enemy
+--
+--   throw 'fireball
+--     checkActionEligibility enemy fireball
+--
+--     lookupChar charName >>= showCharHP

@@ -5,12 +5,39 @@ version:             0.0.1.0
 
 default-extensions:
 - NoImplicitPrelude
-
+- GADTs
+- RankNTypes
+- DeriveFunctor
+- DeriveGeneric
+- OverloadedStrings
+- LambdaCase
+- MultiParamTypeClasses
+- ExplicitNamespaces
+- TypeApplications
+- ScopedTypeVariables
+- TypeOperators
+- TypeFamilies
+- DataKinds
+- FlexibleContexts
+- FlexibleInstances
+- PatternSynonyms
+- PolyKinds
+- DefaultSignatures
+- ConstraintKinds
+- NamedFieldPuns
+- TupleSections
+- ViewPatterns
+- MultiWayIf
+- RecordWildCards
 
 dependencies:
 - base >= 4.7 && < 5
 - aeson
 - Hydra
+- generic-lens
+- text
+- containers
+- haskeline
 
 
 library:

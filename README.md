@@ -3,6 +3,8 @@
 
 add location location_name
 
+add fact fact_descr
+
 end location
 
 
@@ -12,10 +14,10 @@ start local
 end local
 
 
-list templates
-list adventurers/party/players
+show templates
+show adventurers/party/players
 
-list chars
+show chars
 show char char_name
 
 char char_name: add item item_name
@@ -32,8 +34,8 @@ add info
 
 start battle battle_name
 show battle stat
-list enemies
-list party
+show enemies
+show party
 
 start moves
 
@@ -48,7 +50,7 @@ char_name hp: 34     -- shows info on char_name
 try d6> 4           -- "4" is entered by master (4 == success)
 aim d6 1> 3         -- "3" is entered by master
 aim d6 2> 5         -- "5" is entered by master
-succeed, 14 trys    -- info calculated by the program
+succeed, 14 hits    -- info calculated by the program
 char_name hp: 34 - 14 = 20    -- program shows the impact
 enemy_name: 1 more move       -- program shows there is one more move
 
@@ -62,37 +64,46 @@ auto aim d6 2: 6
 failed (missed)  -- info calculated by the program
 
 -- Alternatively, enhanced try:
-enemy enemy_name: throw fireball char char_name d8            -- d8 == try+1
+throw fireball char char_name d8            -- d8 == try+1
 try d8> 4
 
 -- Alternatively, try 2nd syntax
-enemy enemy_name: throw fireball char char_name try+0
+throw fireball char char_name try+0
 try d8> 4
 
 -- With aim:
-enemy enemy_name: throw fireball char char_name d6 aim+1      -- d6 == try+0; aim+1
+throw fireball char char_name d6 aim+1      -- d6 == try+0; aim+1
 try d8> 6         -- +1 for aim
 failed
 
-enemy enemy_name: throw fireball char char_name try+0 aim+1   -- d6 == try+0, aim+1
+throw fireball char char_name try+0 aim+1   -- d6 == try+0, aim+1
 try d10> 5      -- +1 for try +1 for aim
 aim d4 1> 5
 aim d4 2> 6
 
 -- With aim traded for move:
-enemy enemy_name: throw fireball char char_name try+0 aim/m   -- d6 == try+0, aim+1
-enemy_name traded a move for aim
+throw fireball char char_name try+0 aim/m   -- d6 == try+0, aim+1
+enemy_name traded a move for aim            -- info printed by the program
 try d6> 1
 aim d4> 1
 aim d4> 1
 failed (missed)
 
+show enemy_name
+enemy_name: 14 warrior(1)        -- level, class, id
+exp: 654
+hp: 12/24
+ISDL: 3 4 4 3                    -- Int, Str, Dext, Life
+fire: x2+1 3:d6 29/40            -- try, prof, train
 
 -- With aim traded for 2 moves (dexterity should be 6):
 enemy enemy_name: throw fireball char char_name try+0 aim/2m   -- d6 == try+0, aim+2
 enemy_name traded 2 moves for aim, autosuccess
 try d6> 1
 succeed (missed)
+no more moves for enemy_name
+
+
 
 
 end moves

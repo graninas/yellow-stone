@@ -7,6 +7,6 @@ packages:
 extra-deps:
 
 - git: https://github.com/graninas/Hydra.git
-  commit: c1636399cb79fcd2ce6f406fe0a910c1a2f5d98a
+  commit: 037c7bb39d5cdc55e695a5a1147c881d98d7b2c8
 - base58-bytestring-0.1.0
 - time-units-1.0.0
