@@ -1,4 +1,4 @@
-{-# LANGUAGE BangPatterns #-}
+{-# LANGUAGE DeriveAnyClass #-}
 
 module Main where
 
@@ -16,6 +16,9 @@ import qualified Hydra.Language             as L
 import           Hydra.Language
 import qualified Hydra.Runtime              as R
 import qualified Hydra.Interpreters         as R
+
+putStrLn :: Text -> L.LangL ()
+putStrLn = L.evalIO . P.putStrLn
 
 -- std handlers:
 -- ping :: Ping -> L.NodeL Text
@@ -35,98 +38,34 @@ import qualified Hydra.Interpreters         as R
 --     CmdHandler :: Text -> CmdHandler -> (() -> a)  -> CmdHandlerF a
 -- type CmdHandler    = String -> L.NodeL Text
 -- type CmdHandlerL a = Free CmdHandlerF a
--- stdHandler :: (Typeable a, Read a) => (a -> L.NodeL Text) -> CmdHandlerL ()
--- stdHandler f = liftF $ CmdHandler (D.toTag f) (makeStdHandler f) id
---
--- haskeline usage:
--- import           System.Console.Haskeline
--- import           System.Console.Haskeline.History
---
--- callHandler :: NodeRuntime -> Map Text (String -> L.NodeL Text) -> String -> IO Text
--- callHandler nodeRt methods msg = do
---     let tag = T.pack $ takeWhile (/= ' ') msg
---     case methods ^. at tag of
---         Just justMethod -> Impl.runNodeL nodeRt $ justMethod msg
---         Nothing         -> pure $ "The method " <> tag <> " isn't supported."
---
--- interpretNodeDefinitionL nodeRt (L.Std handlers next) = do
---     m <- atomically $ newTVar mempty
---     _ <- runCmdHandlerL m handlers
---     void $ forkIO $ do
---         m'       <- readTVarIO m
---         tag      <- readTVarIO (nodeRt ^. RLens.nodeTag)
---         let
---             filePath = nodeRt ^. RLens.storyPaths.at tag
---             inpStr = if tag == "Client" then "λ> " else ""
---             loop   = do
---                 minput <- getInputLine inpStr
---                 case minput of
---                     Nothing      -> pure ()
---                     Just    line -> do
---                         res <- liftIO $ callHandler nodeRt m' line
---                         outputStrLn $ T.unpack res
---                         whenJust filePath $ \path -> do
---                             history <- getHistory
---                             liftIO $ writeHistory path history
---                         loop
---     runInputT defaultSettings{historyFile = filePath} loop
+-- Commands ([TypeRep])
+-- docHelp = typeOf Ping
+--     : typeOf StopRequest
+--     -- local activity
+--     : typeOf Help
+--     : typeOf M.CreateNodeId
+--     : []
 
-putStrLn :: Text -> AppL ()
-putStrLn = evalIO . P.putStrLn
-
--- putStr :: Text -> AppL ()
--- putStr t = evalIO (P.putStr t >>= pure)
-
-getLine :: AppL Text
-getLine = evalIO P.getLine
-
-getUserInput :: AppL Text
-getUserInput = getLine
-
-
-decayInput :: Text -> [Text]
-decayInput = T.words
-
-
-readTemplates :: St -> AppL Templates
+readTemplates :: St -> L.LangL Templates
 readTemplates st = L.readVarIO $ st ^. _templates
 
-readPlayers :: St -> AppL Players
+readPlayers :: St -> L.LangL Players
 readPlayers st = L.readVarIO $ st ^. _players
 
-showTemplates :: St -> AppL ()
+showTemplates :: St -> L.LangL Text
 showTemplates st = do
-  putStrLn "==== Templates:"
   tsMap <- readTemplates st
-  putStrLn $ "(tmp) " +|| Map.size tsMap ||+ ""
+  pure $ "==== Templates:\n" +|| Map.size tsMap ||+ ""
 
-showPlayers :: St -> AppL ()
+showPlayers :: St -> L.LangL Text
 showPlayers st = do
-  putStrLn "==== Players:"
   psMap <- readPlayers st
-  putStrLn $ "(tmp) " +|| Map.size psMap ||+ ""
+  pure $ "==== Players:\n" +|| Map.size psMap ||+ ""
 
 
 data Loop
   = Continue
   | Finish
-
-
-mainLoop :: St -> AppL ()
-mainLoop st = do
-  putStrLn ""
-  input <- getUserInput
-
-  res <- case decayInput input of
-    []                      -> pure Continue
-    ("show": "templates":_) -> showTemplates st *> pure Continue
-    ("show": "players":_)   -> showPlayers st   *> pure Continue
-    _                       -> pure Continue
-
-  case res of
-    Continue -> mainLoop st
-    Finish   -> pure ()
-
 
 data Template = Template
 
@@ -147,9 +86,26 @@ _templates = field' @"templates"
 _players :: HasField' "players" s a => Lens s s a a
 _players = field' @"players"
 
+data ShowTemplates = ShowTemplates
+  deriving (Generic, Show, Read, Eq)
+
+data ShowPlayers = ShowPlayers
+  deriving (Generic, Show, Read, Eq)
+
+showTemplatesH :: St -> ShowTemplates -> L.LangL Text
+showTemplatesH st _ = showTemplates st
+
+showPlayersH :: St -> ShowPlayers -> L.LangL Text
+showPlayersH st _ = showPlayers st
+
+mainLoop :: St -> AppL ()
+mainLoop st = L.std $ do
+  L.stdHandler (showTemplatesH st)
+  L.stdHandler (showPlayersH st)
+
 app :: AppL ()
 app = do
-  putStrLn "Yellow Stone: Master's Assistant Tool."
+  L.scenario $ putStrLn "Yellow Stone: Master's Assistant Tool."
 
   st <- St
     <$> newVarIO Map.empty
@@ -157,8 +113,7 @@ app = do
 
   mainLoop st
 
-
-  putStrLn "Done."
+  L.awaitAppForever
 
 
 
