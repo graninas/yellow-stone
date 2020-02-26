@@ -1,4 +1,11 @@
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE DeriveGeneric        #-}
+{-# LANGUAGE FlexibleContexts     #-}
+{-# LANGUAGE FlexibleInstances    #-}
+{-# LANGUAGE PolyKinds            #-}
+{-# LANGUAGE ScopedTypeVariables  #-}
+{-# LANGUAGE TypeApplications     #-}
+{-# LANGUAGE TypeOperators        #-}
+-- {-# LANGUAGE UndecidableInstances        #-}
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DeriveAnyClass #-}
 {-# LANGUAGE DeriveDataTypeable #-}
@@ -126,38 +133,35 @@ data FieldDef = FieldDef String FieldType
   deriving (Show)
 
 class ToFieldDef1 f where
-  toFieldDef1 :: f p -> [FieldDef]
+  toFieldDef1 :: Proxy f -> [FieldDef]
 
 instance (ToFieldDef1 f) => ToFieldDef1 (GS.M1 D t f) where
   toFieldDef1 _ = toFieldDef1 (Proxy :: Proxy f)
 
-instance (ToFieldDef1 s1, Constructor c) => ToFieldDef1 (GS.C1 c f) where
+instance (ToFieldDef1 f, Constructor c) => ToFieldDef1 (GS.C1 c f) where
   -- toFieldDef1 _ = [conName (undefined :: C1 c f g)]
-  toFieldDef1 _ = []
-
-
--- instance ToFieldDef1 cons => ToFieldDef1 (GS.D1 meta cons) where
---   toFieldDef1 (GS.M1 d) = toFieldDef1 d
-
--- instance ToFieldDef1 s1 => ToFieldDef1 (GS.C1 meta s1) where
---   toFieldDef1 (GS.M1 c) = toFieldDef1 c
+  toFieldDef1 _ = toFieldDef1 (Proxy :: Proxy f)
 
 instance ToFieldDef1 t => ToFieldDef1 (GS.S1 meta t) where
-  toFieldDef1 (GS.M1 s) = toFieldDef1 s
+  toFieldDef1 _ = toFieldDef1 (Proxy :: Proxy t)
 
 instance ToFieldDef1 (GS.K1 R String) where
-  toFieldDef1 (GS.K1 k) = [FieldDef "" FStr]
+  toFieldDef1 _ = [FieldDef "" FStr]
 
 instance ToFieldDef1 (GS.K1 R Int) where
-  toFieldDef1 (GS.K1 k) = [FieldDef "" FInt]
+  toFieldDef1 _ = [FieldDef "" FInt]
 
 instance
-  (ToFieldDef1 s1_1, ToFieldDef1 s1_2)
-  => ToFieldDef1 ((:*:) s1_1 s1_2) where
-  toFieldDef1 ((:*:) s1 s2) = toFieldDef1 s1 ++ toFieldDef1 s2
+  (ToFieldDef1 f, ToFieldDef1 g)
+  => ToFieldDef1 ((:*:) f g) where
+  toFieldDef1 _ = toFieldDef1 (Proxy :: Proxy f) ++ toFieldDef1 (Proxy :: Proxy g)
 
-defaultToFieldDef :: (Generic a, ToFieldDef1 (Rep a)) => a -> [FieldDef]
-defaultToFieldDef = toFieldDef1 . from
+defaultToFieldDef
+  :: forall a
+  . (Generic a, ToFieldDef1 (Rep a))
+  => Proxy a
+  -> [FieldDef]
+defaultToFieldDef _ = toFieldDef1 (Proxy :: Proxy (Rep a))
 
 userCmd :: Generic a => String -> (a -> L.LangL Text) -> CmdHandlerL ()
 userCmd = undefined
