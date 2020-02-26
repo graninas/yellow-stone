@@ -138,17 +138,20 @@ class ToFieldDef1 f where
 instance (ToFieldDef1 f) => ToFieldDef1 (GS.M1 D t f) where
   toFieldDef1 _ = toFieldDef1 (Proxy :: Proxy f)
 
-instance (ToFieldDef1 f, Constructor c) => ToFieldDef1 (GS.C1 c f) where
-  -- toFieldDef1 _ = [conName (undefined :: C1 c f g)]
+instance (ToFieldDef1 f) => ToFieldDef1 (GS.C1 c f) where
   toFieldDef1 _ = toFieldDef1 (Proxy :: Proxy f)
 
-instance ToFieldDef1 t => ToFieldDef1 (GS.S1 meta t) where
-  toFieldDef1 _ = toFieldDef1 (Proxy :: Proxy t)
+instance (ToFieldDef1 k1, Selector s) => ToFieldDef1 (GS.M1 GS.S s k1) where
+  toFieldDef1 _ = fs'
+    where
+      FieldDef fn ft : fs = toFieldDef1 (Proxy :: Proxy k1)
+      fn' = GS.selName (undefined :: M1 S s k1 k)
+      fs' = FieldDef fn' ft : fs
 
-instance ToFieldDef1 (GS.K1 R String) where
+instance ToFieldDef1 (GS.K1 GS.R String) where
   toFieldDef1 _ = [FieldDef "" FStr]
 
-instance ToFieldDef1 (GS.K1 R Int) where
+instance ToFieldDef1 (GS.K1 GS.R Int) where
   toFieldDef1 _ = [FieldDef "" FInt]
 
 instance
