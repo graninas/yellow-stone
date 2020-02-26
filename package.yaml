@@ -29,6 +29,7 @@ default-extensions:
 - ViewPatterns
 - MultiWayIf
 - RecordWildCards
+- DuplicateRecordFields
 
 dependencies:
 - base >= 4.7 && < 5

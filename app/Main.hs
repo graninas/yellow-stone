@@ -1,4 +1,7 @@
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE DeriveAnyClass #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 module Main where
 
@@ -7,7 +10,10 @@ import qualified Hydra.Prelude as P
 import           System.Environment         (getArgs)
 import qualified Data.Text                  as T
 import qualified Data.Map                   as Map
+import           Data.Data
 import           Data.Generics.Product.Fields
+import           GHC.Generics
+import qualified GHC.Generics               as GS
 import           System.Console.Haskeline
 import           System.Console.Haskeline.History
 
@@ -92,6 +98,70 @@ data ShowTemplates = ShowTemplates
 data ShowPlayers = ShowPlayers
   deriving (Generic, Show, Read, Eq)
 
+-- addLocation :: St -> Location -> L.LangL Text
+-- addLocation loc = pure ""
+--
+--
+-- addCharacter :: St -> Character -> L.LangL Text
+-- addCharacter ch = pure ""
+
+
+data Location = Location
+  { name :: String
+  }
+  deriving (Generic, Typeable, Data)
+
+data Character = Character
+  { name :: String
+  , age :: Int
+  }
+  deriving (Generic, Typeable, Data)
+
+data FieldType
+  = FStr
+  | FInt
+  deriving (Show)
+
+data FieldDef = FieldDef String FieldType
+  deriving (Show)
+
+class ToFieldDef1 f where
+  toFieldDef1 :: f p -> [FieldDef]
+
+instance (ToFieldDef1 f) => ToFieldDef1 (GS.M1 D t f) where
+  toFieldDef1 _ = toFieldDef1 (Proxy :: Proxy f)
+
+instance (ToFieldDef1 s1, Constructor c) => ToFieldDef1 (GS.C1 c f) where
+  -- toFieldDef1 _ = [conName (undefined :: C1 c f g)]
+  toFieldDef1 _ = []
+
+
+-- instance ToFieldDef1 cons => ToFieldDef1 (GS.D1 meta cons) where
+--   toFieldDef1 (GS.M1 d) = toFieldDef1 d
+
+-- instance ToFieldDef1 s1 => ToFieldDef1 (GS.C1 meta s1) where
+--   toFieldDef1 (GS.M1 c) = toFieldDef1 c
+
+instance ToFieldDef1 t => ToFieldDef1 (GS.S1 meta t) where
+  toFieldDef1 (GS.M1 s) = toFieldDef1 s
+
+instance ToFieldDef1 (GS.K1 R String) where
+  toFieldDef1 (GS.K1 k) = [FieldDef "" FStr]
+
+instance ToFieldDef1 (GS.K1 R Int) where
+  toFieldDef1 (GS.K1 k) = [FieldDef "" FInt]
+
+instance
+  (ToFieldDef1 s1_1, ToFieldDef1 s1_2)
+  => ToFieldDef1 ((:*:) s1_1 s1_2) where
+  toFieldDef1 ((:*:) s1 s2) = toFieldDef1 s1 ++ toFieldDef1 s2
+
+defaultToFieldDef :: (Generic a, ToFieldDef1 (Rep a)) => a -> [FieldDef]
+defaultToFieldDef = toFieldDef1 . from
+
+userCmd :: Generic a => String -> (a -> L.LangL Text) -> CmdHandlerL ()
+userCmd = undefined
+
 showTemplatesH :: St -> ShowTemplates -> L.LangL Text
 showTemplatesH st _ = showTemplates st
 
@@ -102,6 +172,12 @@ mainLoop :: St -> AppL ()
 mainLoop st = L.std $ do
   L.stdHandler (showTemplatesH st)
   L.stdHandler (showPlayersH st)
+  --
+  -- L.userCmd_ "show templates" $ showTemplates st
+  -- L.userCmd "add location" @Location $ addLocation st
+  -- L.userCmd "add location" $ addLocation st
+  -- L.userCmd "add character" @Character $ addCharacter st
+  -- L.userCmd "add character" $ addCharacter st
 
 app :: AppL ()
 app = do
