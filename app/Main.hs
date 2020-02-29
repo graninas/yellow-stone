@@ -19,6 +19,7 @@ import qualified Data.Text                  as T
 import qualified Data.Map                   as Map
 import           Data.Data
 import           Data.Generics.Product.Fields
+import           Data.Default
 import           GHC.Generics
 import qualified GHC.Generics               as GS
 import           System.Console.Haskeline
@@ -29,6 +30,7 @@ import qualified Hydra.Language             as L
 import           Hydra.Language
 import qualified Hydra.Runtime              as R
 import qualified Hydra.Interpreters         as R
+import Unsafe.Coerce
 
 putStrLn :: Text -> L.LangL ()
 putStrLn = L.evalIO . P.putStrLn
@@ -112,17 +114,19 @@ data ShowPlayers = ShowPlayers
 -- addCharacter :: St -> Character -> L.LangL Text
 -- addCharacter ch = pure ""
 
+data Test = TeSt Int
+  deriving (Generic, Typeable, Data, Default, Show, Read, Eq)
 
 data Location = Location
   { name :: String
   }
-  deriving (Generic, Typeable, Data)
+  deriving (Generic, Typeable, Data, Default, Show, Read, Eq)
 
 data Character = Character
   { name :: String
   , age :: Int
   }
-  deriving (Generic, Typeable, Data)
+  deriving (Generic, Typeable, Data, Default, Show, Read, Eq)
 
 data FieldType
   = FStr
@@ -159,15 +163,49 @@ instance
   => ToFieldDef1 ((:*:) f g) where
   toFieldDef1 _ = toFieldDef1 (Proxy :: Proxy f) ++ toFieldDef1 (Proxy :: Proxy g)
 
-defaultToFieldDef
-  :: forall a
-  . (Generic a, ToFieldDef1 (Rep a))
-  => Proxy a
-  -> [FieldDef]
-defaultToFieldDef _ = toFieldDef1 (Proxy :: Proxy (Rep a))
+toFieldDef :: forall a. (Generic a, ToFieldDef1 (Rep a))
+  => Proxy a -> [FieldDef]
+toFieldDef _ = toFieldDef1 (Proxy :: Proxy (Rep a))
 
-userCmd :: Generic a => String -> (a -> L.LangL Text) -> CmdHandlerL ()
-userCmd = undefined
+userCmd
+  :: forall a
+   . (Data a, Generic a, ToFieldDef1 (Rep a), Default a)
+  => String
+  -> (a -> L.LangL Text)
+  -> CmdHandlerL ()
+userCmd cmd handler = do
+  let fieldDefs = toFieldDef (Proxy :: Proxy a)
+
+
+  -- let fieldConstrs = map (\(FieldDef n t) -> (n, getConstr t)) fieldDefs
+
+  -- let enumFields = do
+  --       i <- get
+  --       modify (+1)
+  --       let FieldDef n t = fieldDefs !! i
+  --       pure $ getConstr t
+  -- let v :: a = evalState (fromConstrM enumFields (toConstr (def :: a))) 0
+  pure ()
+
+  -- where
+  --   getConstr FStr = fromConstr (toConstr @String "")
+  --   getConstr FInt = fromConstr (toConstr @Int 0)
+
+testCh = ("ab" :: String)
+
+-- test :: String
+-- test = evalState
+--   (fromConstrM
+--     (do
+--       i <- get
+--       modify (+1)
+--       pure $ unsafeCoerce $ testCh !! i
+--     )
+--     (toConstr ("c" :: [Char]))
+--   )
+--   0
+
+
 
 showTemplatesH :: St -> ShowTemplates -> L.LangL Text
 showTemplatesH st _ = showTemplates st

@@ -39,7 +39,7 @@ dependencies:
 - text
 - containers
 - haskeline
-
+- data-default
 
 library:
   source-dirs:
