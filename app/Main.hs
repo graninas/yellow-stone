@@ -107,12 +107,15 @@ data ShowTemplates = ShowTemplates
 data ShowPlayers = ShowPlayers
   deriving (Generic, Show, Read, Eq)
 
--- addLocation :: St -> Location -> L.LangL Text
--- addLocation loc = pure ""
---
---
--- addCharacter :: St -> Character -> L.LangL Text
--- addCharacter ch = pure ""
+addLocation :: St -> Location -> L.LangL ()
+addLocation st loc = error "test!"
+
+
+addCharacter :: St -> Character -> L.LangL ()
+addCharacter st ch = pure ()
+
+data NoVals = NoVals
+  deriving (Generic, Typeable, Data, Default, Show, Read, Eq)
 
 data Test = TeSt Int
   deriving (Generic, Typeable, Data, Default, Show, Read, Eq)
@@ -132,6 +135,156 @@ data FieldType
   = FStr
   | FInt
   deriving (Show)
+
+
+data BrewMethod = V60
+  deriving (Generic, Show, Read)
+
+data Country = Country String
+  deriving (Generic, Show, Read)
+
+data Coffee = MkCoffee { coffeeBeans :: String
+                       , coffeeOriginCountry :: Country
+                       , coffeeBrewMethod :: BrewMethod
+                       }
+  deriving (Generic, Show, Read)
+
+
+
+mkLocation :: Location
+mkLocation =
+  to
+    (M1
+      (M1
+        (M1
+          (K1 "just loc")
+        )
+      )
+    )
+
+
+mkTest :: Test
+mkTest =
+  to
+    (M1
+      (M1
+        (M1
+          (K1 10)
+        )
+      )
+    )
+
+mkNoVals :: NoVals
+mkNoVals = to
+      (M1
+        (M1
+            U1
+          )
+      )
+
+
+mkCharacter :: Character
+mkCharacter =
+  to
+    (M1
+      (M1
+        (M1 (K1  "name")
+          :*:
+          M1 (K1 20)
+        )
+      )
+    )
+
+comb = (:*:)
+type Comb = (:*:)
+
+mkCoffee :: Coffee
+mkCoffee =
+  to
+    (M1
+      (M1
+        (M1 (K1 "Single Origin")
+          :*:
+          (M1 (K1  (Country "Rwanda"))
+            :*:
+            M1 (K1 V60)
+          )
+        )
+      )
+    )
+
+
+mkTest2 :: Test
+mkTest2 =
+  to
+    (M1
+      (M1
+        (M1 (K1 10))
+      )
+    )
+
+mkCoffee2 :: Coffee
+mkCoffee2 = to
+    (M1
+      (M1
+        (comb
+          (M1 (K1 "Single Origin"))
+          (comb
+            (M1 (K1 (Country "Rwanda")))
+            (M1 (K1 V60))
+          )
+        )
+      )
+    )
+
+
+class GConstr f where
+  gConstr :: [String] -> Proxy f -> f
+
+instance (GConstr f) => GConstr (GS.M1 D t f) where
+  gConstr ss _ = undefined -- gConstr ss (Proxy :: Proxy f)
+
+-- instance (GConstr f) => GConstr (GS.C1 c f) where
+--   gConstr ss _ = gConstr ss (Proxy :: Proxy f)
+--
+-- instance (GConstr k1, Selector s) => GConstr (GS.M1 GS.S s k1) where
+--   gConstr ss _ = fs'
+--     where
+--       FieldDef fn ft : fs = gConstr ss (Proxy :: Proxy k1)
+--       fn' = GS.selName (undefined :: M1 S s k1 k)
+--       fs' = FieldDef fn' ft : fs
+--
+-- instance GConstr (GS.K1 GS.R String) where
+--   gConstr ss _ = [FieldDef "" FStr]
+--
+-- instance GConstr (GS.K1 GS.R Int) where
+--   gConstr ss _ = [FieldDef "" FInt]
+--
+-- instance
+--   (GConstr f, GConstr g)
+--   => GConstr (Comb f g) where
+--   gConstr ss _ = gConstr ss (Proxy :: Proxy f) ++ gConstr ss (Proxy :: Proxy g)
+
+toGConstr :: forall a. (Generic a, GConstr (Rep a))
+  => [String] -> Proxy a -> [FieldDef]
+toGConstr ss _ = gConstr ss (Proxy :: Proxy (Rep a))
+
+-- parseGen :: Generic a => [String] -> [FieldDef] -> a
+-- -- parseGen [] [] = M1 (M1 U1)
+-- parseGen (s:ss) [] = error "tokens do not match field defs"
+-- parseGen [] (f:fs) = error "field defs do not match tokens"
+-- parseGen ss fs = to $ M1 (M1 (mkGen' ss fs))
+--   where
+--     mkGen' (s:ss) [FieldDef n FInt] = M1 (K1 (parseIntF n s))
+--     mkGen' (s:ss) (FieldDef n FInt : fs) =
+--       comb
+--         (M1 (K1 (parseIntF n s)))
+--         (mkGen' ss fs)
+--
+--     parseIntF :: String -> String -> Int      -- No errors for now
+--     parseIntF n s = case readMaybe s of
+--       Nothing -> error $ "Failed to read Int field " -- ++ n ++ ": " ++ s
+--       Just n  -> n
 
 data FieldDef = FieldDef String FieldType
   deriving (Show)
@@ -205,24 +358,11 @@ testCh = ("ab" :: String)
 --   )
 --   0
 
-
-
-showTemplatesH :: St -> ShowTemplates -> L.LangL Text
-showTemplatesH st _ = showTemplates st
-
-showPlayersH :: St -> ShowPlayers -> L.LangL Text
-showPlayersH st _ = showPlayers st
-
 mainLoop :: St -> AppL ()
 mainLoop st = L.std $ do
-  L.stdHandler (showTemplatesH st)
-  L.stdHandler (showPlayersH st)
-  --
   -- L.userCmd_ "show templates" $ showTemplates st
-  -- L.userCmd "add location" @Location $ addLocation st
-  -- L.userCmd "add location" $ addLocation st
-  -- L.userCmd "add character" @Character $ addCharacter st
-  -- L.userCmd "add character" $ addCharacter st
+  L.userCmd "add location" $ addLocation st
+  L.userCmd "add character" $ addCharacter st
 
 app :: AppL ()
 app = do
